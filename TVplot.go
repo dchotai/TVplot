@@ -81,7 +81,6 @@ func ShowQuery(q string) (t string, y float64, i string, n int) {
 }
 
 func DownloadPage(id string, year int) *html.Node {
-
 	url := fmt.Sprintf("http://www.imdb.com/title/%s/episodes?season=%d", id, year)
 
 	tempFile, err := os.Create("temp.html")
@@ -111,20 +110,41 @@ func DownloadPage(id string, year int) *html.Node {
 	return doc
 }
 
-func main() {
+type Episode struct {
+	season    int
+	formatted string
+	title     string
+	rating    float64
+}
+
+func GetRatings() [][]Episode {
 	title, year, imdbID, numSeasons := ShowQuery("BREAKING BAD")
-	fmt.Println(title, year, imdbID, numSeasons)
+	log.Println(title, year, imdbID, numSeasons)
+	rv := make([][]Episode, numSeasons)
 
-	for i := 1; i <= numSeasons; i += 1 {
-		// fmt.Printf("Season %02d\n", i)
+	for i := 0; i < numSeasons; i += 1 {
+		doc := DownloadPage(imdbID, i+1)
 
-		doc := DownloadPage(imdbID, i)
+		episodes := htmlquery.Find(doc, "//meta[@itemprop = 'episodeNumber']")
 
-		for j, n := range htmlquery.Find(doc, "//meta[@itemprop = 'episodeNumber']") {
-			rating := htmlquery.Find(doc, "//div[@class = 'ipl-rating-star ']/span[@class='ipl-rating-star__rating']/text()")[j]
-			episode, _ := strconv.Atoi(htmlquery.SelectAttr(n, "content"))
-			fmt.Printf("S%02dE%02d - %s\n", i, episode, rating.Data)
+		rv[i] = make([]Episode, len(episodes))
+
+		for j, n := range episodes {
+			rating := htmlquery.Find(doc, "//div[@class = 'ipl-rating-star ']/span[@class='ipl-rating-star__rating']/text()")[j].Data
+			episodeTitle := htmlquery.Find(doc, "//a[@itemprop='name']/text()")[j].Data
+			episodeNum, _ := strconv.Atoi(htmlquery.SelectAttr(n, "content"))
+			ratingFloat, _ := strconv.ParseFloat(rating, 64)
+			rv[i][j] = Episode{i + 1, fmt.Sprintf("S%02dE%02d", i+1, episodeNum), episodeTitle, ratingFloat}
+
+			// log.Printf("S%02dE%02d - %s - %s\n", i+1, episodeNum, episodeTitle, rating)
 		}
 	}
+	return rv
 	// strings.TrimSpace()
+}
+
+func main() {
+	ratings := GetRatings()
+	log.Println(ratings)
+	// http.HandleFunc(pattern, handler)
 }
