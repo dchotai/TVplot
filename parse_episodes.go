@@ -44,23 +44,25 @@ func ShowQuery(q string) (t string, y float64, i string, n int) {
 	json.Unmarshal(resp_body, &data)
 
 	if len(data) < 1 {
-		log.Fatal("No shows found with given query")
+		log.Println("No shows found with given query")
+		return
 	}
 
-	title := data[0].(map[string]interface{})["show"].(map[string]interface{})["title"].(string)
-	year := data[0].(map[string]interface{})["show"].(map[string]interface{})["year"].(float64)
-	imdbID := data[0].(map[string]interface{})["show"].(map[string]interface{})["ids"].(map[string]interface{})["imdb"].(string)
-	traktSlug := data[0].(map[string]interface{})["show"].(map[string]interface{})["ids"].(map[string]interface{})["slug"].(string)
+	topLevel := data[0].(map[string]interface{})["show"].(map[string]interface{})
+	title := topLevel["title"].(string)
+	year := topLevel["year"].(float64)
+	imdbID := topLevel["ids"].(map[string]interface{})["imdb"].(string)
+	traktSlug := topLevel["ids"].(map[string]interface{})["slug"].(string)
 
 	query = fmt.Sprintf("https://api.trakt.tv/shows/%s/seasons", traktSlug)
 	req.URL, _ = url.Parse(query)
 	if err != nil {
-		log.Fatal("Errored when parsing slug")
+		log.Println("Errored when parsing slug")
 	}
 
 	resp, err = client.Do(req)
 	if err != nil {
-		log.Fatal("Errored when sending slug request")
+		log.Println("Errored when sending slug request")
 	}
 
 	defer resp.Body.Close()
@@ -70,7 +72,7 @@ func ShowQuery(q string) (t string, y float64, i string, n int) {
 	json.Unmarshal(resp_body, &data)
 
 	if len(data) < 1 {
-		log.Fatal("No shows found with given slug")
+		log.Println("No shows found with given slug")
 	}
 
 	numSeasons := len(data)
@@ -88,7 +90,7 @@ func DownloadPage(id string, season int) *html.Node {
 
 	tempFile, err := os.Create("temp.html")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer tempFile.Close()
 
@@ -97,7 +99,7 @@ func DownloadPage(id string, season int) *html.Node {
 
 	_, err = io.Copy(tempFile, resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	f, err := os.Open("temp.html")
@@ -113,17 +115,14 @@ func DownloadPage(id string, season int) *html.Node {
 	return doc
 }
 
-type Episode struct {
-	season    int
-	formatted string
-	title     string
-	rating    float64
-}
-
 // Parses the a show's episodes to organize info into a 2D array grouped by season
-func GetRatings() [][]Episode {
-	title, year, imdbID, numSeasons := ShowQuery("BREAKING BAD")
-	log.Println(title, year, imdbID, numSeasons)
+func GetRatings(q string) (t string, y float64, i string, e [][]Episode) {
+	if len(strings.TrimSpace(q)) == 0 {
+		return
+	}
+
+	title, year, imdbID, numSeasons := ShowQuery(q)
+	// log.Println(title, year, imdbID, numSeasons)
 	rv := make([][]Episode, numSeasons)
 
 	for i := 0; i < numSeasons; i += 1 {
@@ -139,8 +138,6 @@ func GetRatings() [][]Episode {
 			episodeNum, _ := strconv.Atoi(htmlquery.SelectAttr(n, "content"))
 			ratingFloat, _ := strconv.ParseFloat(rating, 64)
 			rv[i][j] = Episode{i + 1, fmt.Sprintf("S%02dE%02d", i+1, episodeNum), episodeTitle, ratingFloat}
-
-			// log.Printf("S%02dE%02d - %s - %s\n", i+1, episodeNum, episodeTitle, rating)
 		}
 	}
 
@@ -148,11 +145,5 @@ func GetRatings() [][]Episode {
 	if err != nil {
 		log.Println("Couldn't remove temp", err.Error())
 	}
-	return rv
-}
-
-func main() {
-	ratings := GetRatings()
-	log.Println(ratings)
-	// http.HandleFunc(pattern, handler)
+	return title, year, imdbID, rv
 }

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TVplot</title>
+</head>
+<body>
+    <a href="/">TVplot</a>
+
+    <form action="/query/" method="post">
+        <input type="text" name="query" placeholder="Stranger Things">
+        <input type="submit" name="submit">
+    </form>
+
+    {{.Error}}
+</body>
+</html>
