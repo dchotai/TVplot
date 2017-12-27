@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -21,7 +22,13 @@ var TRAKT_API_KEY = "XXX"
 func ShowQuery(q string) (t string, y float64, i string, n int) {
 	client := &http.Client{}
 	q = strings.TrimSpace(q)
+
 	query := "https://api.trakt.tv/search/show?query=" + strings.Replace(q, " ", "%20", -1)
+	idExists, err := regexp.MatchString("^tt\\d+", q)
+	if idExists {
+		query = "https://api.trakt.tv/search/imdb/" + q
+	}
+
 	req, _ := http.NewRequest("GET", query, nil)
 
 	req.Header.Add("Content-Type", "application/json")
