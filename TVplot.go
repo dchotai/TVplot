@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 
 var TRAKT_API_KEY = "XXX"
 
+// Returns the title, year, IMDb ID, and number of seasons of a show
 func ShowQuery(q string) (t string, y float64, i string, n int) {
 	client := &http.Client{}
 	q = strings.TrimSpace(q)
@@ -51,14 +53,14 @@ func ShowQuery(q string) (t string, y float64, i string, n int) {
 	traktSlug := data[0].(map[string]interface{})["show"].(map[string]interface{})["ids"].(map[string]interface{})["slug"].(string)
 
 	query = fmt.Sprintf("https://api.trakt.tv/shows/%s/seasons", traktSlug)
-	req, _ = http.NewRequest("GET", query, nil)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("trakt-api-version", "2")
-	req.Header.Add("trakt-api-key", TRAKT_API_KEY)
-	resp, err = client.Do(req)
-
+	req.URL, _ = url.Parse(query)
 	if err != nil {
-		log.Fatal("Errored when sending request to the server")
+		log.Fatal("Errored when parsing slug")
+	}
+
+	resp, err = client.Do(req)
+	if err != nil {
+		log.Fatal("Errored when sending slug request")
 	}
 
 	defer resp.Body.Close()
@@ -80,8 +82,9 @@ func ShowQuery(q string) (t string, y float64, i string, n int) {
 	return title, year, imdbID, numSeasons
 }
 
-func DownloadPage(id string, year int) *html.Node {
-	url := fmt.Sprintf("http://www.imdb.com/title/%s/episodes?season=%d", id, year)
+// Downloads the episode list of a show's given season from IMDb
+func DownloadPage(id string, season int) *html.Node {
+	url := fmt.Sprintf("http://www.imdb.com/title/%s/episodes?season=%d", id, season)
 
 	tempFile, err := os.Create("temp.html")
 	if err != nil {
@@ -117,6 +120,7 @@ type Episode struct {
 	rating    float64
 }
 
+// Parses the a show's episodes to organize info into a 2D array grouped by season
 func GetRatings() [][]Episode {
 	title, year, imdbID, numSeasons := ShowQuery("BREAKING BAD")
 	log.Println(title, year, imdbID, numSeasons)
@@ -139,8 +143,12 @@ func GetRatings() [][]Episode {
 			// log.Printf("S%02dE%02d - %s - %s\n", i+1, episodeNum, episodeTitle, rating)
 		}
 	}
+
+	err := os.Remove("temp.html")
+	if err != nil {
+		log.Println("Couldn't remove temp", err.Error())
+	}
 	return rv
-	// strings.TrimSpace()
 }
 
 func main() {
