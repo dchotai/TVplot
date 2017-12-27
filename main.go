@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 )
 
 type Episode struct {
@@ -22,6 +23,14 @@ type View struct {
 }
 
 func homeHandler(rw http.ResponseWriter, req *http.Request) {
+
+	id := req.URL.Path[len("/"):]
+	idExists, err := regexp.MatchString("^tt\\d+", id)
+	if idExists {
+		viewHandler(rw, req, id)
+		return
+	}
+
 	t, err := template.ParseFiles("home.html")
 	if err != nil {
 		log.Println(err)
@@ -42,7 +51,18 @@ func homeHandler(rw http.ResponseWriter, req *http.Request) {
 
 var newView View
 
-func viewHandler(rw http.ResponseWriter, req *http.Request) {
+func viewHandler(rw http.ResponseWriter, req *http.Request, id string) {
+	if newView.ID != id {
+		title, year, imdbID, ratings := GetRatings(id)
+		log.Println(title, year, imdbID, ratings)
+		if title == "" {
+			handleError(rw, req)
+			return
+		}
+		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, ""}
+		http.Redirect(rw, req, "/"+imdbID, http.StatusSeeOther)
+	}
+
 	t, err := template.ParseFiles("view.html")
 	if err != nil {
 		log.Println(err)
@@ -69,7 +89,7 @@ func queryHandler(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, ""}
-		http.Redirect(rw, req, "/view/"+imdbID, http.StatusSeeOther)
+		http.Redirect(rw, req, "/"+imdbID, http.StatusSeeOther)
 	} else {
 		handleError(rw, req)
 	}
@@ -82,7 +102,6 @@ func handleError(rw http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/query/", queryHandler)
 	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
