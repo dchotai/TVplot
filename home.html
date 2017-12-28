@@ -4,13 +4,56 @@
     <title>TVplot</title>
 </head>
 <body>
-    <a href="/">TVplot</a>
+    <h1><a href="/">TVplot</a></h1>
 
-    <form action="/query/" method="post">
-        <input type="text" name="query" placeholder="Stranger Things">
+    <style type="text/css">
+        body {
+            width: 70%;
+            margin: 2em auto 2em;
+            font-size: 1.25em;
+            line-height: 1.4em;
+            text-align: center;
+            font-family: Helvetica;
+            color: #515151;
+
+        }
+        a {
+            color: #588d69;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #d43728;
+        }
+        input[type=text] {
+            width: 100%;
+            padding: 0.5em;
+            text-align: center;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        input[type=submit] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0em;
+            font-size: 1em;
+        }
+    </style>
+
+    <h3><p>Visualize IMDb episode ratings by season</p></h3>
+
+    <p>
+        <form action="/query/" method="post">
+        <input type="text" name="query" placeholder="Search by show title or IMDb ID">
         <input type="submit" name="submit">
-    </form>
+        </form>
+    </p>
 
-    {{.Error}}
+    <div style="color:red">{{.Error}}</div>
+    <p>
+        Have you seen <a href="/tt0386676">The Office</a>, <a href="/tt4574334">Stranger Things</a>, or <a href="/tt0903747">Breaking Bad</a>?
+    </p>
+    <p> <div style="font-size: .85em">
+        Check out the <a href="https://github.com/dchotai/TVplot">source code</a>. Heavily inspired by <a href="http://graphtv.kevinformatics.com/">Graph TV</a>, which isn't under active development.</div>
+    </p>
 </body>
 </html>
