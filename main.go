@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -102,7 +103,11 @@ func handleError(rw http.ResponseWriter, req *http.Request) {
 func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/query/", queryHandler)
-	err := http.ListenAndServe(":8000", nil)
+	port := os.Getenv("PORT")
+	if port != "" {
+		port = ":8000"
+	}
+	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
