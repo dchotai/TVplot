@@ -9,11 +9,11 @@ import (
 )
 
 type Episode struct {
-	episodeNum int
-	season     int
-	formatted  string
-	title      string
-	rating     float64
+	EpisodeNum int
+	Season     int
+	Formatted  string
+	Title      string
+	Rating     float64
 }
 
 type View struct {
@@ -25,7 +25,6 @@ type View struct {
 }
 
 func homeHandler(rw http.ResponseWriter, req *http.Request) {
-
 	id := req.URL.Path[len("/"):]
 	idExists, err := regexp.MatchString("^tt\\d+", id)
 	if idExists {

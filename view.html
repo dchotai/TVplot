@@ -6,5 +6,70 @@
 <body>
     <a href="/">TVplot</a>
     {{.Title}} ({{.Year}})
+
+    <br>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+
+        var data = [
+            {{range $i, $e := .Episodes}}
+            {{range $j, $x := $e}}
+            [{{$x.EpisodeNum}}, {{$x.Rating}}, {{$x.Season}}],
+            {{end}}
+            {{end}}
+        ];
+
+
+        var margin = { top: 30, right: 50, bottom: 40, left: 50 };
+        var width = 960 - margin.left - margin.right;
+        var height = 500 - margin.top - margin.bottom;
+
+        var xscale = d3.scaleLinear()
+            .domain([0,data.length])
+            .range([0,width]);
+
+        var yscale = d3.scaleLinear()
+            .domain([0, 10])
+            .range([height,0]);
+
+        var xAxis = d3.axisBottom().scale(xscale);
+
+        var yAxis = d3.axisLeft().scale(yscale);
+
+          var svg = d3.select("body")
+        .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        
+        var cValue = function(d) {return d[2]}, color = d3.scaleOrdinal(d3.schemeCategory10);;
+
+        console.log(data);
+
+        // Add circles from data
+            svg.selectAll("circle")
+                .data(data)
+                .enter()
+                .append("circle")
+                .attr("x", function(d) {
+                    return xscale(d[0]);  // Location of x
+                })
+                .attr("y", function(d) {
+                    return yscale(d[1]);  // Location of y
+                })
+                .style("fill", function(d) { return color(cValue(d));})
+                .attr("r", 4)  // Radius
+                .attr("cx", function(d) {
+                    return xscale(d[0]);  // Returns scaled circle x
+                })
+                .attr("cy", function(d) {
+                    return yscale(d[1]);  // Returns scaled circle y
+                });
+
+
+    </script>
 </body>
 </html>
