@@ -9,17 +9,19 @@ import (
 )
 
 type Episode struct {
-	season    int
-	formatted string
-	title     string
-	rating    float64
+	episodeNum int
+	season     int
+	formatted  string
+	title      string
+	rating     float64
 }
 
 type View struct {
-	Title string
-	Year  string
-	ID    string
-	Error string
+	Title    string
+	Year     string
+	ID       string
+	Error    string
+	Episodes [][]Episode
 }
 
 func homeHandler(rw http.ResponseWriter, req *http.Request) {
@@ -53,13 +55,13 @@ var newView View
 
 func viewHandler(rw http.ResponseWriter, req *http.Request, id string) {
 	if newView.ID != id {
-		title, year, imdbID, ratings := GetRatings(id)
-		log.Println(title, year, imdbID, ratings)
+		title, year, imdbID, episodes := GetRatings(id)
+		log.Println(title, year, imdbID, episodes)
 		if title == "" {
 			handleError(rw, req)
 			return
 		}
-		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, ""}
+		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, "", episodes}
 		http.Redirect(rw, req, "/"+imdbID, http.StatusSeeOther)
 	}
 
@@ -73,6 +75,8 @@ func viewHandler(rw http.ResponseWriter, req *http.Request, id string) {
 		log.Println(err)
 	}
 
+	writeCSV(newView.Episodes)
+
 }
 
 func queryHandler(rw http.ResponseWriter, req *http.Request) {
@@ -82,13 +86,13 @@ func queryHandler(rw http.ResponseWriter, req *http.Request) {
 			handleError(rw, req)
 			return
 		}
-		title, year, imdbID, ratings := GetRatings(fmt.Sprintf("%s", req.Form["query"][0]))
-		log.Println(title, year, imdbID, ratings)
+		title, year, imdbID, episodes := GetRatings(fmt.Sprintf("%s", req.Form["query"][0]))
+		log.Println(title, year, imdbID, episodes)
 		if title == "" {
 			handleError(rw, req)
 			return
 		}
-		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, ""}
+		newView = View{title, fmt.Sprintf("%d", int(year)), imdbID, "", episodes}
 		http.Redirect(rw, req, "/"+imdbID, http.StatusSeeOther)
 	} else {
 		handleError(rw, req)
@@ -96,7 +100,7 @@ func queryHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func handleError(rw http.ResponseWriter, req *http.Request) {
-	newView = View{"", "", "", "Error: Could not find that show"}
+	newView = View{"", "", "", "Error: Could not find that show", nil}
 	http.Redirect(rw, req, "/", http.StatusSeeOther)
 }
 
