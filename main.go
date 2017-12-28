@@ -33,7 +33,7 @@ func homeHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	t, err := template.ParseFiles("home.html")
+	t, err := template.ParseFiles("index.html")
 	if err != nil {
 		log.Println(err)
 	}
@@ -103,11 +103,7 @@ func handleError(rw http.ResponseWriter, req *http.Request) {
 func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/query/", queryHandler)
-	port := os.Getenv("PORT")
-	if port != "" {
-		port = ":8000"
-	}
-	err := http.ListenAndServe(":"+port, nil)
+	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
