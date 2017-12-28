@@ -48,7 +48,6 @@ func homeHandler(rw http.ResponseWriter, req *http.Request) {
 			log.Println(err)
 		}
 	}
-
 }
 
 var newView View
@@ -74,9 +73,6 @@ func viewHandler(rw http.ResponseWriter, req *http.Request, id string) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	writeCSV(newView.Episodes)
-
 }
 
 func queryHandler(rw http.ResponseWriter, req *http.Request) {
