@@ -129,7 +129,6 @@ func GetRatings(q string) (t string, y float64, i string, e [][]Episode) {
 	}
 
 	title, year, imdbID, numSeasons := ShowQuery(q)
-	// log.Println(title, year, imdbID, numSeasons)
 	rv := make([][]Episode, numSeasons)
 	count := 1
 
@@ -141,7 +140,11 @@ func GetRatings(q string) (t string, y float64, i string, e [][]Episode) {
 		rv[i] = make([]Episode, len(episodes))
 
 		for j, n := range episodes {
-			rating := htmlquery.Find(doc, "//div[@class = 'ipl-rating-star ']/span[@class='ipl-rating-star__rating']/text()")[j].Data
+			ratings := htmlquery.Find(doc, "//div[@class = 'ipl-rating-star ']/span[@class='ipl-rating-star__rating']/text()")
+			if len(ratings) < 1 {
+				return title, year, imdbID, rv
+			}
+			rating := ratings[j].Data
 			episodeTitle := htmlquery.Find(doc, "//a[@itemprop='name']/text()")[j].Data
 			episodeNum, _ := strconv.Atoi(htmlquery.SelectAttr(n, "content"))
 			ratingFloat, _ := strconv.ParseFloat(rating, 64)
