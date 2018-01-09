@@ -8,12 +8,6 @@
     <h2>{{.Title}} ({{.Year}})</h2>
 
     <style type="text/css">
-        .detail {
-          position: absolute;
-          width: 300px;
-          height: 25px;
-          pointer-events: none;
-        }
         body {
             font-size: 1.25em;
             line-height: 1.4em;
@@ -28,9 +22,37 @@
         a:hover {
             color: #d43728;
         }
+
+        .d3-tip {
+          line-height: 1;
+          font: 14px sans-serif;
+          padding: 12px;
+          background: rgba(0, 0, 0, 0.8);
+          color: rgb(185, 185, 185);
+          border-radius: 2px;
+        }
+
+        .d3-tip:after {
+          box-sizing: border-box;
+          display: inline;
+          font-size: 10px;
+          width: 100%;
+          line-height: 1;
+          color: rgba(0, 0, 0, 0.8);
+          content: "\25BC";
+          position: absolute;
+          text-align: center;
+        }
+
+        .d3-tip.n:after {
+          margin: -1px 0 0 0;
+          top: 100%;
+          left: 0;
+        }
     </style>
 
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.rawgit.com/VACLab/d3-tip/master/d3-tip.js"></script>
     <script>
         var data = [
             {{range $i, $e := .Episodes}}
@@ -59,7 +81,14 @@
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         var cValue = function(d) {return d[2]}, color = d3.scaleOrdinal(d3.schemeCategory10);
-        var detail = d3.select("body").append("div").attr("class", "detail").style("opacity", 0);
+        var tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .offset([-10, 0])
+            .html(function(d) {
+              return "<div><span>Rating:</span> <span style='color:white'>" + d[1] + "</span></div>" + "<div><span>Title:</span> <span style='color:white'>" + d[3] + " - " + d[4] + "</span></div>";
+            })
+
+        svg.call(tip);
 
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
@@ -96,15 +125,8 @@
             .attr("r", 6)
             .attr("cx", function(d) { return xscale(d[0]);})
             .attr("cy", function(d) { return yscale(d[1]);})
-            .on("mouseover", function(d) {
-                detail.transition().duration(0).style("opacity", 1);
-                detail.html("<div style='font-size: .9em' >" + d[3] + " - " + d[4] + "</div>")
-                .style("left", (d3.event.pageX - 120) + "px")
-               .style("top", (d3.event.pageY + 15) + "px");
-            })
-            .on("mouseout", function(d) {
-                detail.transition().duration(0).style("opacity", 0);
-            });
+            .on("mouseover", tip.show)
+            .on("mouseout", tip.hide);
     </script>
 </body>
 </html>
